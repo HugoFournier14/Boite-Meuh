@@ -1,0 +1,6 @@
+{
+  "name": "La Boîte à Meuh",
+  "description": "Fromagerie Cabourgeaise à Cabourg en Normandie. Plus de 100 fromages affinés, teurgoule artisanale, crémerie, plateaux sur mesure et épicerie fine.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

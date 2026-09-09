@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Sparkles, Award, Flame, HeartHandshake, CheckCircle2, ChevronRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Sparkles, Award, Flame, HeartHandshake, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { TERROIR_PILLARS } from '../data/fromagerieData';
 
 interface UniversSectionProps {
@@ -9,6 +9,7 @@ interface UniversSectionProps {
 
 export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreServices }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   const pillars = [
     {
@@ -74,37 +75,62 @@ export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreService
   ];
 
   const currentPillar = pillars[activeTab];
+  const CurrentIcon = currentPillar.icon;
+
+  const handlePrev = () => {
+    setActiveTab((prev) => (prev - 1 + pillars.length) % pillars.length);
+  };
+
+  const handleNext = () => {
+    setActiveTab((prev) => (prev + 1) % pillars.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+    if (diff > 50) {
+      handleNext();
+    } else if (diff < -50) {
+      handlePrev();
+    }
+    touchStartX.current = null;
+  };
 
   return (
-    <section id="univers" className="py-20 lg:py-28 bg-[#FAF7F2] text-[#2C241E] relative overflow-hidden">
+    <section id="univers" className="py-14 sm:py-20 lg:py-28 bg-[#FAF7F2] text-[#2C241E] relative overflow-hidden">
       {/* Decorative subtle texture watermark */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-[#EFE6DA]/40 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#314A3D]/5 rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#314A3D]/10 text-[#314A3D] text-xs font-semibold uppercase tracking-wider mb-3">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-14">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#314A3D]/10 text-[#314A3D] text-xs font-semibold uppercase tracking-wider mb-2 sm:mb-3">
             Savoir-Faire & Terroir
           </span>
-          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold text-[#2C241E] tracking-tight mb-5">
+          <h2 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-bold text-[#2C241E] tracking-tight mb-3 sm:mb-5">
             Notre univers : l’amour du goût & du geste
           </h2>
-          <p className="text-base sm:text-lg text-[#6E5D4F] leading-relaxed">
+          <p className="text-sm sm:text-base lg:text-lg text-[#6E5D4F] leading-relaxed">
             À La Boîte à Meuh, nous célébrons le fromage comme une histoire d’hommes, de saisons et de pâturages. 
-            Découvrez une collection vivante de plus de 100 fromages de caractère, affinés avec rigueur et bienveillance, 
-            aux côtés de notre célèbre teurgoule et des délices des producteurs normands.
+            Découvrez une collection vivante de plus de 100 fromages affinés, aux côtés de notre célèbre teurgoule et des délices normands.
           </p>
         </div>
 
-        {/* 4 Feature Cards Grid / Interactive Pillars */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-10">
+        {/* Desktop Only: 4 Feature Cards Grid / Interactive Pillars (Hidden on mobile) */}
+        <div className="hidden md:grid md:grid-cols-4 gap-3 sm:gap-4 mb-10">
           {pillars.map((pillar, idx) => {
             const Icon = pillar.icon;
             const isSelected = activeTab === idx;
             return (
               <button
                 key={pillar.id}
+                id={`desktop-pillar-tab-${idx}`}
                 onClick={() => setActiveTab(idx)}
                 className={`p-4 sm:p-5 rounded-2xl text-left transition-all duration-200 border cursor-pointer ${
                   isSelected
@@ -130,55 +156,143 @@ export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreService
           })}
         </div>
 
-        {/* Active Pillar Detailed Spotlight */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#E8DFD4] shadow-sm">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* Image display */}
-            <div className="lg:col-span-6 overflow-hidden rounded-2xl relative aspect-4/3 shadow-sm bg-[#EFE9E0]">
+        {/* Mobile Navigation Header with Carousel Arrows (Visible only on mobile) */}
+        <div className="md:hidden flex items-center justify-between gap-3 mb-4 bg-white/80 backdrop-blur-xs border border-[#E8DFD4] rounded-2xl px-3 py-2 shadow-xs">
+          <button
+            id="mobile-pillar-prev-btn"
+            onClick={handlePrev}
+            aria-label="Pilier précédent"
+            className="w-10 h-10 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DD] active:scale-95 text-[#2C241E] flex items-center justify-center border border-[#E8DFD4] transition-all shrink-0 cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-2 overflow-hidden text-center min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-[#314A3D]/10 text-[#314A3D] flex items-center justify-center shrink-0">
+              <CurrentIcon className="w-4 h-4" />
+            </div>
+            <div className="truncate">
+              <div className="text-[11px] font-bold text-[#B87333] uppercase tracking-wider">
+                {currentPillar.badge} ({activeTab + 1}/{pillars.length})
+              </div>
+              <div className="text-xs font-serif font-bold text-[#2C241E] truncate">
+                {currentPillar.shortTitle}
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="mobile-pillar-next-btn"
+            onClick={handleNext}
+            aria-label="Pilier suivant"
+            className="w-10 h-10 rounded-xl bg-[#FAF7F2] hover:bg-[#EFE8DD] active:scale-95 text-[#2C241E] flex items-center justify-center border border-[#E8DFD4] transition-all shrink-0 cursor-pointer"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Active Pillar Detailed Spotlight / Carousel Container */}
+        <div 
+          className="bg-white rounded-3xl p-5 sm:p-8 lg:p-10 border border-[#E8DFD4] shadow-sm relative"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-center">
+            {/* Image display with embedded mobile navigation arrows */}
+            <div className="lg:col-span-6 overflow-hidden rounded-2xl relative aspect-16/10 sm:aspect-4/3 shadow-sm bg-[#EFE9E0] group">
               <img
                 src={currentPillar.image}
                 alt={currentPillar.title}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-500"
               />
-              <div className="absolute top-3 left-3 bg-[#1C1814]/80 backdrop-blur-xs text-white text-xs font-medium px-3 py-1 rounded-full">
+              
+              {/* Badge */}
+              <div className="absolute top-3 left-3 bg-[#1C1814]/85 backdrop-blur-xs text-white text-[11px] sm:text-xs font-medium px-2.5 py-1 rounded-full shadow-xs">
                 {currentPillar.badge}
+              </div>
+
+              {/* Quick floating arrows on mobile over the image */}
+              <div className="md:hidden absolute inset-y-0 inset-x-2 flex items-center justify-between pointer-events-none">
+                <button
+                  onClick={handlePrev}
+                  aria-label="Précédent"
+                  className="pointer-events-auto w-9 h-9 rounded-full bg-white/90 active:scale-95 text-[#2C241E] shadow-md flex items-center justify-center border border-[#E8DFD4] transition-transform backdrop-blur-xs"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNext}
+                  aria-label="Suivant"
+                  className="pointer-events-auto w-9 h-9 rounded-full bg-white/90 active:scale-95 text-[#2C241E] shadow-md flex items-center justify-center border border-[#E8DFD4] transition-transform backdrop-blur-xs"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Mobile pagination dots overlay at bottom of image */}
+              <div className="md:hidden absolute bottom-2.5 inset-x-0 flex justify-center items-center gap-1.5 pointer-events-auto">
+                {pillars.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveTab(i)}
+                    aria-label={`Aller au pilier ${i + 1}`}
+                    className={`h-2 rounded-full transition-all duration-200 ${
+                      activeTab === i ? 'w-6 bg-white shadow-xs' : 'w-2 bg-white/50'
+                    }`}
+                  />
+                ))}
               </div>
             </div>
 
             {/* Text description */}
             <div className="lg:col-span-6 flex flex-col justify-center">
-              <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#314A3D] uppercase tracking-wider mb-2">
-                <span>Pilier d'excellence</span>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#314A3D] uppercase tracking-wider">
+                  <span>Pilier d'excellence {activeTab + 1}/{pillars.length}</span>
+                </div>
+                {/* Desktop pagination indicators */}
+                <div className="hidden md:flex items-center gap-1">
+                  {pillars.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveTab(i)}
+                      className={`h-1.5 rounded-full transition-all duration-200 ${
+                        activeTab === i ? 'w-5 bg-[#314A3D]' : 'w-1.5 bg-[#D9CEC1]'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
 
-              <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#2C241E] mb-4">
+              <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-[#2C241E] mb-3 sm:mb-4">
                 {currentPillar.title}
               </h3>
 
-              <p className="text-sm sm:text-base text-[#5C4D42] leading-relaxed mb-6">
+              <p className="text-sm sm:text-base text-[#5C4D42] leading-relaxed mb-4 sm:mb-6">
                 {currentPillar.description}
               </p>
 
-              <div className="space-y-3 mb-8">
+              <div className="space-y-2.5 sm:space-y-3 mb-6 sm:mb-8">
                 {currentPillar.bullets.map((bullet, i) => (
-                  <div key={i} className="flex items-start gap-3">
+                  <div key={i} className="flex items-start gap-2.5 sm:gap-3">
                     <CheckCircle2 className="w-4 h-4 text-[#314A3D] shrink-0 mt-0.5" />
                     <span className="text-xs sm:text-sm text-[#44382F] leading-snug">{bullet}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-2">
                 <button
+                  id="pillar-explore-services-btn"
                   onClick={onExploreServices}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#314A3D] hover:bg-[#25392F] text-white text-xs sm:text-sm font-semibold transition-all duration-150 active:scale-98 cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-[#314A3D] hover:bg-[#25392F] text-white text-xs sm:text-sm font-semibold transition-all duration-150 active:scale-98 cursor-pointer shadow-xs"
                 >
                   <span>Nos plateaux & créations</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                <span className="text-xs text-[#7A6B5F] italic">
+                <span className="text-xs text-[#7A6B5F] italic text-center sm:text-left">
                   Conseil personnalisé en boutique à Cabourg
                 </span>
               </div>
@@ -187,13 +301,13 @@ export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreService
         </div>
 
         {/* Local Producers Quote / Terroir Statement */}
-        <div className="mt-12 p-6 sm:p-8 rounded-2xl bg-[#EFE8DD] border border-[#E3D7C8] flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="mt-8 sm:mt-12 p-5 sm:p-8 rounded-2xl bg-[#EFE8DD] border border-[#E3D7C8] flex flex-col md:flex-row items-center justify-between gap-5 sm:gap-6">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-[#314A3D] text-[#E7DCB9] flex items-center justify-center font-serif text-2xl font-bold shrink-0">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#314A3D] text-[#E7DCB9] flex items-center justify-center font-serif text-xl sm:text-2xl font-bold shrink-0">
               « »
             </div>
             <div>
-              <p className="font-serif text-base sm:text-lg text-[#2C241E] italic font-medium">
+              <p className="font-serif text-sm sm:text-lg text-[#2C241E] italic font-medium">
                 « Défendre les petits producteurs fermiers et faire vivre le goût authentique du lait cru au cœur de Cabourg. »
               </p>
               <p className="text-xs text-[#756455] font-medium mt-1">
@@ -203,7 +317,7 @@ export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreService
           </div>
           <a
             href="#contact"
-            className="shrink-0 px-4 py-2 rounded-xl text-xs font-semibold text-[#2C241E] bg-white hover:bg-[#FAF7F2] border border-[#D9CEC1] transition-colors"
+            className="shrink-0 w-full sm:w-auto text-center px-4 py-2.5 rounded-xl text-xs font-semibold text-[#2C241E] bg-white hover:bg-[#FAF7F2] border border-[#D9CEC1] transition-colors"
           >
             Venir nous rendre visite
           </a>
@@ -212,3 +326,4 @@ export const UniversSection: React.FC<UniversSectionProps> = ({ onExploreService
     </section>
   );
 };
+
